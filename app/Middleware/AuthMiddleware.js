@@ -15,7 +15,7 @@ class AuthMiddleware {
             }
 
             const token = authHeader.substring(7); // Remove 'Bearer ' prefix
-            const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
+            const jwtSecret = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 
             try {
                 const decoded = jwt.verify(token, jwtSecret);
@@ -69,7 +69,7 @@ class AuthMiddleware {
             }
 
             const token = authHeader.substring(7);
-            const jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
+            const jwtSecret = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 
             try {
                 const decoded = jwt.verify(token, jwtSecret);

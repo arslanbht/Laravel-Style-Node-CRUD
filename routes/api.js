@@ -94,92 +94,93 @@ class Route {
     }
 }
 
-// API Routes
-Route.group({ prefix: 'api/v1' }, (api) => {
-    
-    // Public authentication routes (no auth required)
-    Route.group({ prefix: 'auth' }, (auth) => {
-        Route.post(auth, '/login', userController.login);
-        Route.post(auth, '/register', userController.register);
-        
-        // Protected auth routes (require authentication)
-        Route.post(auth, '/logout', userController.logout, [authMiddleware]);
-        Route.get(auth, '/me', userController.me, [authMiddleware]);
-        Route.post(auth, '/change-password', userController.changePassword, [authMiddleware]);
-    });
+// API Routes using standard Express routing
+const apiRouter = express.Router();
 
-    // Protected User routes (all require authentication)
-    Route.resource(api, 'users', userController, {
-        middleware: [authMiddleware]
-    });
+// Public authentication routes (no auth required)
+apiRouter.post('/auth/login', userController.login);
+apiRouter.post('/auth/register', userController.register);
 
-    // Additional protected user routes
-    Route.get(api, '/users/:id/posts', userController.posts, [authMiddleware]);
+// Protected auth routes (require authentication)
+apiRouter.post('/auth/logout', authMiddleware, userController.logout);
+apiRouter.get('/auth/me', authMiddleware, userController.me);
+apiRouter.post('/auth/change-password', authMiddleware, userController.changePassword);
 
-    // Protected Post routes (all require authentication)
-    Route.resource(api, 'posts', postController, {
-        middleware: [authMiddleware]
-    });
+// Protected User routes (all require authentication)
+apiRouter.get('/users', authMiddleware, userController.index);
+apiRouter.post('/users', authMiddleware, userController.store);
+apiRouter.get('/users/:id', authMiddleware, userController.show);
+apiRouter.put('/users/:id', authMiddleware, userController.update);
+apiRouter.delete('/users/:id', authMiddleware, userController.destroy);
+apiRouter.get('/users/:id/posts', authMiddleware, userController.posts);
 
-    // Additional protected post routes
-    Route.get(api, '/posts/published', postController.published, [authMiddleware]);
-    Route.get(api, '/posts/drafts', postController.drafts, [authMiddleware]);
-    Route.post(api, '/posts/:id/publish', postController.publish, [authMiddleware]);
+// Protected Post routes (all require authentication)
+apiRouter.get('/posts', authMiddleware, postController.index);
+apiRouter.post('/posts', authMiddleware, postController.store);
+apiRouter.get('/posts/:id', authMiddleware, postController.show);
+apiRouter.put('/posts/:id', authMiddleware, postController.update);
+apiRouter.delete('/posts/:id', authMiddleware, postController.destroy);
 
-    // Protected Statistics routes
-    Route.group({ prefix: 'stats', middleware: [authMiddleware] }, (stats) => {
-        Route.get(stats, '/users', async (req, res) => {
-            try {
-                const userService = new (require('../app/Services/UserService'))();
-                const stats = await userService.getUserStats();
-                res.json({
-                    success: true,
-                    message: 'User statistics retrieved successfully',
-                    data: stats,
-                    timestamp: new Date().toISOString()
-                });
-            } catch (error) {
-                console.error('Error fetching user stats:', error);
-                res.status(500).json({
-                    success: false,
-                    message: 'Failed to retrieve user statistics',
-                    timestamp: new Date().toISOString()
-                });
-            }
-        });
-        
-        Route.get(stats, '/posts', async (req, res) => {
-            try {
-                const postService = new (require('../app/Services/PostService'))();
-                const stats = await postService.getPostStats();
-                res.json({
-                    success: true,
-                    message: 'Post statistics retrieved successfully',
-                    data: stats,
-                    timestamp: new Date().toISOString()
-                });
-            } catch (error) {
-                console.error('Error fetching post stats:', error);
-                res.status(500).json({
-                    success: false,
-                    message: 'Failed to retrieve post statistics',
-                    timestamp: new Date().toISOString()
-                });
-            }
-        });
-    });
+// Additional protected post routes
+apiRouter.get('/posts/published', authMiddleware, postController.published);
+apiRouter.get('/posts/drafts', authMiddleware, postController.drafts);
+apiRouter.post('/posts/:id/publish', authMiddleware, postController.publish);
 
-    // Public health check (no auth required)
-    Route.get(api, '/health', (req, res) => {
+// Protected Statistics routes
+apiRouter.get('/stats/users', authMiddleware, async (req, res) => {
+    try {
+        const userService = new (require('../app/Services/UserService'))();
+        const stats = await userService.getUserStats();
         res.json({
-            status: 'OK',
-            timestamp: new Date().toISOString(),
-            version: '1.0.0',
-            environment: process.env.NODE_ENV || 'development',
-            authenticated: !!req.user
+            success: true,
+            message: 'User statistics retrieved successfully',
+            data: stats,
+            timestamp: new Date().toISOString()
         });
+    } catch (error) {
+        console.error('Error fetching user stats:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve user statistics',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+apiRouter.get('/stats/posts', authMiddleware, async (req, res) => {
+    try {
+        const postService = new (require('../app/Services/PostService'))();
+        const stats = await postService.getPostStats();
+        res.json({
+            success: true,
+            message: 'Post statistics retrieved successfully',
+            data: stats,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        console.error('Error fetching post stats:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to retrieve post statistics',
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Public health check (no auth required)
+apiRouter.get('/health', (req, res) => {
+    res.json({
+        status: 'OK',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0',
+        environment: process.env.NODE_ENV || 'development',
+        authenticated: !!req.user
     });
 });
+
+
+// Mount the API router
+router.use('/api/v1', apiRouter);
 
 // 404 handler for API routes
 router.use('*', (req, res) => {

@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 class UserService extends BaseService {
     constructor() {
         super();
-        this.jwtSecret = process.env.JWT_SECRET || 'your-secret-key';
+        this.jwtSecret = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
         this.jwtExpiresIn = process.env.JWT_EXPIRES_IN || '24h';
     }
 
