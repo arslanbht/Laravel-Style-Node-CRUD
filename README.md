@@ -14,6 +14,7 @@ A comprehensive Node.js CRUD application built with a Laravel-inspired architect
 - 📝 **Logging**: Request logging with Morgan
 - 🧪 **Seeding**: Database seeding system
 - 🔧 **Helpers**: Utility functions for common tasks
+- 📚 **API Documentation**: Interactive Swagger/OpenAPI documentation
 
 ## Directory Structure
 
@@ -40,6 +41,10 @@ A comprehensive Node.js CRUD application built with a Laravel-inspired architect
 │   └── index.js           # Utility helper functions
 ├── bootstrap/
 │   └── app.js             # Application bootstrap
+├── docs/
+│   └── swagger/           # Swagger documentation files
+├── config/
+│   └── swagger.js         # Swagger configuration
 ├── public/                # Static files
 ├── storage/               # File storage
 └── tests/                 # Test files
@@ -111,6 +116,41 @@ A comprehensive Node.js CRUD application built with a Laravel-inspired architect
    npm start
    ```
 
+## API Documentation
+
+### 📚 Interactive Documentation
+
+Once the server is running, you can access the interactive API documentation at:
+
+- **Swagger UI**: http://localhost:3000/api-docs
+- **Swagger JSON**: http://localhost:3000/swagger.json
+
+The Swagger documentation provides:
+- **Interactive API Explorer**: Test endpoints directly from the browser
+- **Request/Response Examples**: See example payloads and responses
+- **Authentication**: Built-in JWT token management
+- **Schema Definitions**: Complete data model documentation
+- **Error Codes**: Detailed error response documentation
+
+### 🔑 Using Swagger Authentication
+
+1. Navigate to http://localhost:3000/api-docs
+2. Click the "Authorize" button (🔒) at the top right
+3. Enter your JWT token in the format: `Bearer YOUR_JWT_TOKEN`
+4. Click "Authorize" to authenticate all requests
+5. Test protected endpoints directly from the documentation
+
+### 📖 Documentation Features
+
+- **OpenAPI 3.0 Specification**: Industry-standard API documentation
+- **Request Validation**: See required fields and validation rules
+- **Response Schemas**: Understand response structures
+- **Error Handling**: Complete error response documentation
+- **Code Examples**: Ready-to-use curl commands
+- **Model Definitions**: Detailed schema for all data models
+
+> 📖 **For detailed Swagger documentation guide, see [docs/SWAGGER_GUIDE.md](docs/SWAGGER_GUIDE.md)**
+
 ## API Endpoints
 
 ### 🔓 Public Endpoints (No Authentication Required)
@@ -149,6 +189,8 @@ A comprehensive Node.js CRUD application built with a Laravel-inspired architect
 - `GET /api/v1/stats/posts` - Get post statistics
 
 ## Usage Examples
+
+> **💡 Tip**: You can test all these endpoints interactively using the Swagger documentation at http://localhost:3000/api-docs
 
 ### 1. Register a New User
 ```bash
@@ -363,6 +405,13 @@ npm run seed list
 ### Adding New Routes
 1. Add routes in `routes/api.js`
 2. Use the Laravel-style Route helper
+3. Document new endpoints in `docs/swagger/` directory
+
+### API Documentation Workflow
+1. Create/update Swagger documentation in `docs/swagger/`
+2. Use JSDoc comments with `@swagger` annotations
+3. Test endpoints in Swagger UI at `/api-docs`
+4. Export API specification from `/swagger.json`
 
 ## Testing
 

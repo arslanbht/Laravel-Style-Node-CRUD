@@ -3,6 +3,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('../config/swagger');
 const { container } = require('../app/Services/ServiceContainer');
 
 // Import services
@@ -87,6 +89,29 @@ class Application {
 
     // Register routes
     registerRoutes() {
+        // Swagger documentation
+        this.app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs, {
+            customCss: '.swagger-ui .topbar { display: none }',
+            customSiteTitle: 'Laravel-Style Node.js CRUD API Documentation',
+            customfavIcon: '/favicon.ico',
+            swaggerOptions: {
+                persistAuthorization: true,
+                displayRequestDuration: true,
+                filter: true,
+                showExtensions: true,
+                showCommonExtensions: true,
+                docExpansion: 'none',
+                defaultModelsExpandDepth: 2,
+                defaultModelExpandDepth: 2,
+            }
+        }));
+
+        // Swagger JSON endpoint
+        this.app.get('/swagger.json', (req, res) => {
+            res.setHeader('Content-Type', 'application/json');
+            res.send(swaggerSpecs);
+        });
+
         // API routes
         this.app.use('/', apiRoutes);
 
@@ -102,7 +127,8 @@ class Application {
                     health: '/api/v1/health',
                     users: '/api/v1/users',
                     posts: '/api/v1/posts',
-                    auth: '/api/v1/auth'
+                    auth: '/api/v1/auth',
+                    documentation: '/api-docs'
                 }
             });
         });
@@ -210,7 +236,8 @@ class Application {
 
 📍 Environment: ${this.env}
 🌐 URL: http://localhost:${this.port}
-📚 API Documentation: http://localhost:${this.port}/api/v1/health
+📚 API Documentation: http://localhost:${this.port}/api-docs
+🔍 Swagger JSON: http://localhost:${this.port}/swagger.json
 🗄️  Database: MySQL
 
 📋 Available endpoints:
@@ -245,6 +272,7 @@ class Application {
    npm run migrate            - Run migrations
    npm run seed               - Run seeders
    npm run dev                - Start development server
+   npm run docs               - Show documentation URL
             `);
         });
 
