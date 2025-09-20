@@ -2,10 +2,12 @@ const BaseController = require('./BaseController');
 const User = require('../Models/User');
 const UserResource = require('../Resources/UserResource');
 const CreateUserRequest = require('../Requests/CreateUserRequest');
+const UserService = require('../Services/UserService');
 
 class UserController extends BaseController {
     constructor() {
         super();
+        this.userService = new UserService();
     }
 
     // GET /api/users
@@ -200,6 +202,139 @@ class UserController extends BaseController {
         } catch (error) {
             console.error('Error fetching user posts:', error);
             return this.serverError(res, 'Failed to retrieve user posts');
+        }
+    });
+
+    // POST /api/v1/auth/login
+    login = this.asyncHandler(async (req, res) => {
+        try {
+            const { email, password } = req.body;
+
+            if (!email || !password) {
+                return this.badRequest(res, 'Email and password are required', {
+                    email: !email ? ['Email is required'] : [],
+                    password: !password ? ['Password is required'] : []
+                });
+            }
+
+            const result = await this.userService.authenticateUser(email, password);
+            
+            this.logActivity('LOGIN', 'User', result.user, { email });
+            
+            return this.success(res, result, 'Login successful');
+
+        } catch (error) {
+            console.error('Login error:', error);
+            
+            if (error.message === 'Invalid credentials' || error.message === 'Account is not active') {
+                return this.unauthorized(res, error.message);
+            }
+            
+            return this.serverError(res, 'Login failed');
+        }
+    });
+
+    // POST /api/v1/auth/register
+    register = this.asyncHandler(async (req, res) => {
+        try {
+            // Validate request
+            const validation = await this.validateRequest(CreateUserRequest, req.body);
+            
+            if (!validation.valid) {
+                return this.validationError(res, validation.errors);
+            }
+
+            // Check if email already exists
+            const existingUser = await User.findByEmail(validation.data.email);
+            if (existingUser) {
+                return this.badRequest(res, 'Email already exists', {
+                    email: ['The email has already been taken.']
+                });
+            }
+
+            // Create user
+            const userData = await this.userService.createUser(validation.data);
+            
+            // Generate token for new user
+            const authResult = await this.userService.authenticateUser(validation.data.email, validation.data.password);
+            
+            this.logActivity('REGISTER', 'User', authResult.user);
+            
+            return this.created(res, authResult, 'User registered successfully');
+
+        } catch (error) {
+            console.error('Registration error:', error);
+            return this.serverError(res, 'Registration failed');
+        }
+    });
+
+    // POST /api/v1/auth/logout
+    logout = this.asyncHandler(async (req, res) => {
+        try {
+            // In a real application, you might want to blacklist the token
+            // For now, we'll just return a success message
+            
+            this.logActivity('LOGOUT', 'User', req.user);
+            
+            return this.success(res, null, 'Logout successful');
+
+        } catch (error) {
+            console.error('Logout error:', error);
+            return this.serverError(res, 'Logout failed');
+        }
+    });
+
+    // GET /api/v1/auth/me
+    me = this.asyncHandler(async (req, res) => {
+        try {
+            // Load user with posts if requested
+            if (req.query.include === 'posts') {
+                await req.user.getPosts();
+            }
+
+            const transformedUser = UserResource.make(req.user).toArray();
+            
+            this.logActivity('GET_PROFILE', 'User', req.user);
+            
+            return this.success(res, transformedUser, 'User profile retrieved successfully');
+
+        } catch (error) {
+            console.error('Error fetching user profile:', error);
+            return this.serverError(res, 'Failed to retrieve user profile');
+        }
+    });
+
+    // POST /api/v1/auth/change-password
+    changePassword = this.asyncHandler(async (req, res) => {
+        try {
+            const { current_password, new_password, new_password_confirmation } = req.body;
+
+            if (!current_password || !new_password || !new_password_confirmation) {
+                return this.badRequest(res, 'All password fields are required');
+            }
+
+            if (new_password !== new_password_confirmation) {
+                return this.badRequest(res, 'New password confirmation does not match');
+            }
+
+            if (new_password.length < 6) {
+                return this.badRequest(res, 'New password must be at least 6 characters long');
+            }
+
+            await this.userService.changePassword(req.userId, current_password, new_password);
+            
+            this.logActivity('CHANGE_PASSWORD', 'User', req.user);
+            
+            return this.success(res, null, 'Password changed successfully');
+
+        } catch (error) {
+            console.error('Change password error:', error);
+            
+            if (error.message === 'Current password is incorrect') {
+                return this.badRequest(res, error.message);
+            }
+            
+            return this.serverError(res, 'Failed to change password');
         }
     });
 }

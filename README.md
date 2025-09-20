@@ -49,7 +49,7 @@ A comprehensive Node.js CRUD application built with a Laravel-inspired architect
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/arslanbht/Laravel-Style-Node-CRUD.git
    cd laravel-style-node-crud
    ```
 
@@ -113,41 +113,47 @@ A comprehensive Node.js CRUD application built with a Laravel-inspired architect
 
 ## API Endpoints
 
-### Authentication
+### 🔓 Public Endpoints (No Authentication Required)
+- `GET /` - Application information
+- `GET /api/v1/health` - Health check
 - `POST /api/v1/auth/register` - Register a new user
-- `POST /api/v1/auth/login` - Login user (to be implemented)
-- `POST /api/v1/auth/logout` - Logout user (requires auth)
-- `GET /api/v1/auth/me` - Get current user (requires auth)
+- `POST /api/v1/auth/login` - Login user
 
-### Users
-- `GET /api/v1/users` - List all users (requires auth)
-- `POST /api/v1/users` - Create a new user (requires auth)
-- `GET /api/v1/users/:id` - Get user by ID (requires auth)
-- `PUT /api/v1/users/:id` - Update user (requires auth)
-- `DELETE /api/v1/users/:id` - Delete user (requires auth)
-- `GET /api/v1/users/:id/posts` - Get user's posts (requires auth)
+### 🔒 Protected Endpoints (Authentication Required)
 
-### Posts
+#### Authentication
+- `POST /api/v1/auth/logout` - Logout user
+- `GET /api/v1/auth/me` - Get current user profile
+- `POST /api/v1/auth/change-password` - Change user password
+
+#### Users
+- `GET /api/v1/users` - List all users
+- `POST /api/v1/users` - Create a new user
+- `GET /api/v1/users/:id` - Get user by ID
+- `PUT /api/v1/users/:id` - Update user
+- `DELETE /api/v1/users/:id` - Delete user
+- `GET /api/v1/users/:id/posts` - Get user's posts
+
+#### Posts
 - `GET /api/v1/posts` - List all posts
 - `POST /api/v1/posts` - Create a new post
 - `GET /api/v1/posts/:id` - Get post by ID
 - `PUT /api/v1/posts/:id` - Update post
 - `DELETE /api/v1/posts/:id` - Delete post
 - `GET /api/v1/posts/published` - Get published posts
-- `GET /api/v1/posts/drafts` - Get draft posts (requires auth)
-- `POST /api/v1/posts/:id/publish` - Publish a post (requires auth)
+- `GET /api/v1/posts/drafts` - Get draft posts
+- `POST /api/v1/posts/:id/publish` - Publish a post
 
-### Utility
-- `GET /` - Application information
-- `GET /api/v1/health` - Health check
+#### Statistics
+- `GET /api/v1/stats/users` - Get user statistics
+- `GET /api/v1/stats/posts` - Get post statistics
 
 ## Usage Examples
 
-### Creating a User
+### 1. Register a New User
 ```bash
-curl -X POST http://localhost:3000/api/v1/users \
+curl -X POST http://localhost:3000/api/v1/auth/register \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
     "name": "John Doe",
     "email": "john@example.com",
@@ -156,10 +162,42 @@ curl -X POST http://localhost:3000/api/v1/users \
   }'
 ```
 
-### Creating a Post
+### 2. Login User
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "password": "Password123"
+  }'
+```
+
+**Response will include a JWT token:**
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "data": {
+    "user": { ... },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "expires_in": "24h"
+  }
+}
+```
+
+### 3. Using Protected Endpoints (with Authentication)
+
+**Get Current User Profile:**
+```bash
+curl -X GET http://localhost:3000/api/v1/auth/me \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Create a Post:**
 ```bash
 curl -X POST http://localhost:3000/api/v1/posts \
   -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
   -d '{
     "title": "My First Post",
     "content": "This is the content of my first post.",
@@ -168,10 +206,70 @@ curl -X POST http://localhost:3000/api/v1/posts \
   }'
 ```
 
-### Getting Posts with Filters
+**Get All Posts:**
 ```bash
-curl "http://localhost:3000/api/v1/posts?status=published&page=1&limit=10&include=user"
+curl -X GET http://localhost:3000/api/v1/posts \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
+
+**Get Posts with Filters:**
+```bash
+curl "http://localhost:3000/api/v1/posts?status=published&page=1&limit=10&include=user" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+**Change Password:**
+```bash
+curl -X POST http://localhost:3000/api/v1/auth/change-password \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "current_password": "Password123",
+    "new_password": "NewPassword456",
+    "new_password_confirmation": "NewPassword456"
+  }'
+```
+
+### 4. Error Response for Unauthorized Access
+If you try to access a protected endpoint without authentication:
+```json
+{
+  "success": false,
+  "message": "Access token required",
+  "timestamp": "2025-01-01T00:00:00.000Z"
+}
+```
+
+## Authentication Flow
+
+### 🔐 How Authentication Works
+
+1. **Registration**: Users register with name, email, and password
+2. **Login**: Users authenticate with email/password and receive a JWT token
+3. **Authorization**: Include the JWT token in the `Authorization: Bearer <token>` header for protected endpoints
+4. **Token Expiry**: Tokens expire after 24 hours (configurable)
+5. **Logout**: Optional logout endpoint (tokens remain valid until expiry)
+
+### 🔑 JWT Token Structure
+
+The JWT token contains:
+```json
+{
+  "userId": 1,
+  "email": "user@example.com",
+  "iat": 1640995200,
+  "exp": 1641081600
+}
+```
+
+### 🛡️ Security Features
+
+- **Password Hashing**: Passwords are hashed using bcrypt
+- **JWT Tokens**: Secure token-based authentication
+- **Rate Limiting**: API rate limiting to prevent abuse
+- **CORS**: Cross-origin resource sharing protection
+- **Helmet**: Security headers for protection against common vulnerabilities
+- **Input Validation**: All inputs are validated and sanitized
 
 ## Architecture Components
 

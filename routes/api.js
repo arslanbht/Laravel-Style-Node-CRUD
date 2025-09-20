@@ -97,57 +97,86 @@ class Route {
 // API Routes
 Route.group({ prefix: 'api/v1' }, (api) => {
     
-    // Authentication routes
+    // Public authentication routes (no auth required)
     Route.group({ prefix: 'auth' }, (auth) => {
-        Route.post(auth, '/login', userController.login || ((req, res) => {
-            res.status(501).json({ message: 'Login endpoint not implemented yet' });
-        }));
+        Route.post(auth, '/login', userController.login);
+        Route.post(auth, '/register', userController.register);
         
-        Route.post(auth, '/register', userController.store);
-        
-        Route.post(auth, '/logout', userController.logout || ((req, res) => {
-            res.status(501).json({ message: 'Logout endpoint not implemented yet' });
-        }), [authMiddleware]);
-        
-        Route.get(auth, '/me', userController.me || ((req, res) => {
-            res.status(501).json({ message: 'Me endpoint not implemented yet' });
-        }), [authMiddleware]);
+        // Protected auth routes (require authentication)
+        Route.post(auth, '/logout', userController.logout, [authMiddleware]);
+        Route.get(auth, '/me', userController.me, [authMiddleware]);
+        Route.post(auth, '/change-password', userController.changePassword, [authMiddleware]);
     });
 
-    // User routes
+    // Protected User routes (all require authentication)
     Route.resource(api, 'users', userController, {
         middleware: [authMiddleware]
     });
 
-    // Additional user routes
+    // Additional protected user routes
     Route.get(api, '/users/:id/posts', userController.posts, [authMiddleware]);
 
-    // Post routes
-    Route.resource(api, 'posts', postController);
+    // Protected Post routes (all require authentication)
+    Route.resource(api, 'posts', postController, {
+        middleware: [authMiddleware]
+    });
 
-    // Additional post routes
-    Route.get(api, '/posts/published', postController.published);
+    // Additional protected post routes
+    Route.get(api, '/posts/published', postController.published, [authMiddleware]);
     Route.get(api, '/posts/drafts', postController.drafts, [authMiddleware]);
     Route.post(api, '/posts/:id/publish', postController.publish, [authMiddleware]);
 
-    // Statistics routes
+    // Protected Statistics routes
     Route.group({ prefix: 'stats', middleware: [authMiddleware] }, (stats) => {
-        Route.get(stats, '/users', (req, res) => {
-            res.status(501).json({ message: 'User stats endpoint not implemented yet' });
+        Route.get(stats, '/users', async (req, res) => {
+            try {
+                const userService = new (require('../app/Services/UserService'))();
+                const stats = await userService.getUserStats();
+                res.json({
+                    success: true,
+                    message: 'User statistics retrieved successfully',
+                    data: stats,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                console.error('Error fetching user stats:', error);
+                res.status(500).json({
+                    success: false,
+                    message: 'Failed to retrieve user statistics',
+                    timestamp: new Date().toISOString()
+                });
+            }
         });
         
-        Route.get(stats, '/posts', (req, res) => {
-            res.status(501).json({ message: 'Post stats endpoint not implemented yet' });
+        Route.get(stats, '/posts', async (req, res) => {
+            try {
+                const postService = new (require('../app/Services/PostService'))();
+                const stats = await postService.getPostStats();
+                res.json({
+                    success: true,
+                    message: 'Post statistics retrieved successfully',
+                    data: stats,
+                    timestamp: new Date().toISOString()
+                });
+            } catch (error) {
+                console.error('Error fetching post stats:', error);
+                res.status(500).json({
+                    success: false,
+                    message: 'Failed to retrieve post statistics',
+                    timestamp: new Date().toISOString()
+                });
+            }
         });
     });
 
-    // Health check
+    // Public health check (no auth required)
     Route.get(api, '/health', (req, res) => {
         res.json({
             status: 'OK',
             timestamp: new Date().toISOString(),
             version: '1.0.0',
-            environment: process.env.NODE_ENV || 'development'
+            environment: process.env.NODE_ENV || 'development',
+            authenticated: !!req.user
         });
     });
 });

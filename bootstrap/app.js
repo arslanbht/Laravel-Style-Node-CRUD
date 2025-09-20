@@ -214,20 +214,32 @@ class Application {
 🗄️  Database: MySQL
 
 📋 Available endpoints:
-   GET  /                     - Application info
-   GET  /api/v1/health        - Health check
-   POST /api/v1/auth/register - Register user
-   POST /api/v1/auth/login    - Login user (not implemented)
-   GET  /api/v1/users         - List users (requires auth)
-   POST /api/v1/users         - Create user (requires auth)
-   GET  /api/v1/users/:id     - Get user (requires auth)
-   PUT  /api/v1/users/:id     - Update user (requires auth)
-   DELETE /api/v1/users/:id   - Delete user (requires auth)
-   GET  /api/v1/posts         - List posts
-   POST /api/v1/posts         - Create post
-   GET  /api/v1/posts/:id     - Get post
-   PUT  /api/v1/posts/:id     - Update post
-   DELETE /api/v1/posts/:id   - Delete post
+   🔓 Public endpoints:
+   GET  /                          - Application info
+   GET  /api/v1/health             - Health check
+   POST /api/v1/auth/register      - Register user
+   POST /api/v1/auth/login         - Login user
+   
+   🔒 Protected endpoints (require authentication):
+   POST /api/v1/auth/logout        - Logout user
+   GET  /api/v1/auth/me            - Get current user
+   POST /api/v1/auth/change-password - Change password
+   GET  /api/v1/users              - List users
+   POST /api/v1/users              - Create user
+   GET  /api/v1/users/:id          - Get user
+   PUT  /api/v1/users/:id          - Update user
+   DELETE /api/v1/users/:id        - Delete user
+   GET  /api/v1/users/:id/posts    - Get user posts
+   GET  /api/v1/posts              - List posts
+   POST /api/v1/posts              - Create post
+   GET  /api/v1/posts/:id          - Get post
+   PUT  /api/v1/posts/:id          - Update post
+   DELETE /api/v1/posts/:id        - Delete post
+   GET  /api/v1/posts/published    - Get published posts
+   GET  /api/v1/posts/drafts       - Get draft posts
+   POST /api/v1/posts/:id/publish  - Publish post
+   GET  /api/v1/stats/users        - User statistics
+   GET  /api/v1/stats/posts        - Post statistics
 
 🔧 Commands:
    npm run migrate            - Run migrations
