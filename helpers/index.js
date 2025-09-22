@@ -368,6 +368,9 @@ const utils = {
     }
 };
 
+// Import debugging helpers
+const { dd, dump, ddr, ddLog, prettyJson, ray } = require('./dd');
+
 module.exports = {
     str,
     arr,
@@ -375,5 +378,12 @@ module.exports = {
     date,
     validate,
     file,
-    utils
+    utils,
+    // Laravel-style debugging functions
+    dd,
+    dump,
+    ddr,
+    ddLog,
+    prettyJson,
+    ray
 };

@@ -3,6 +3,8 @@ const User = require('../Models/User');
 const UserResource = require('../Resources/UserResource');
 const CreateUserRequest = require('../Requests/CreateUserRequest');
 const UserService = require('../Services/UserService');
+const { dump, dd } = require('../../bootstrap/globals');
+const bcrypt = require('bcryptjs/dist/bcrypt');
 
 class UserController extends BaseController {
     constructor() {
@@ -90,10 +92,17 @@ class UserController extends BaseController {
     // POST /api/users
     store = this.asyncHandler(async (req, res) => {
         try {
+            // Debug incoming request (only in development)
+            if (env('APP_ENV') === 'development') {
+                ray('Creating new user with data:', req.body);
+            }
+            
             // Validate request
             const validation = await this.validateRequest(CreateUserRequest, req.body);
             
             if (!validation.valid) {
+                // Debug validation errors
+                dump('Validation failed:', validation.errors);
                 return this.validationError(res, validation.errors);
             }
 
@@ -253,7 +262,11 @@ class UserController extends BaseController {
             }
 
             // Create user
-            const userData = await this.userService.createUser(validation.data);
+            const userData = await this.userService.createUser({
+                name: validation.data.name,
+                email: validation.data.email,
+                password: bcrypt.hashSync(validation.data.password, 10)
+            });
             
             // Generate token for new user
             const authResult = await this.userService.authenticateUser(validation.data.email, validation.data.password);
@@ -264,7 +277,7 @@ class UserController extends BaseController {
 
         } catch (error) {
             console.error('Registration error:', error);
-            return this.serverError(res, 'Registration failed');
+            return this.serverError(res, 'Registration failed', error);
         }
     });
 

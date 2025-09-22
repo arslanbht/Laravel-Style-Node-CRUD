@@ -15,6 +15,7 @@ A comprehensive Node.js CRUD application built with a Laravel-inspired architect
 - 🧪 **Seeding**: Database seeding system
 - 🔧 **Helpers**: Utility functions for common tasks
 - 📚 **API Documentation**: Interactive Swagger/OpenAPI documentation
+- 🐛 **Laravel-style Debugging**: dd(), dump(), ray() functions for debugging
 
 ## Directory Structure
 
@@ -412,6 +413,40 @@ npm run seed list
 2. Use JSDoc comments with `@swagger` annotations
 3. Test endpoints in Swagger UI at `/api-docs`
 4. Export API specification from `/swagger.json`
+
+## Laravel-Style Debugging
+
+### 🐛 Available Debug Functions
+
+The application includes Laravel-style debugging functions available globally:
+
+- **`dd()`** - Dump and die (stops execution)
+- **`dump()`** - Dump without stopping
+- **`ddr()`** - Dump request and die
+- **`ray()`** - Quick debug output
+- **`ddLog()`** - Log to file
+
+### 🔍 Usage Examples
+
+```javascript
+// In controllers, middleware, or services
+dd(req.body); // Dumps request body and stops execution
+
+dump(user, 'User loaded'); // Shows data, continues execution
+
+ddr(req, 'body', 'headers'); // Dumps specific request parts and stops
+
+ray('Debug message:', variable); // Quick debug, returns value
+
+// Environment-safe debugging
+if (env('APP_ENV') === 'development') {
+    dd(sensitiveData);
+}
+```
+
+### 📖 Debug Documentation
+
+For comprehensive debugging guide, see [docs/DEBUGGING_GUIDE.md](docs/DEBUGGING_GUIDE.md)
 
 ## Testing
 

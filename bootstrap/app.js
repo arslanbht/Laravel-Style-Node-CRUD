@@ -7,6 +7,9 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('../config/swagger');
 const { container } = require('../app/Services/ServiceContainer');
 
+// Load Laravel-style global helpers
+require('./globals');
+
 // Import services
 const UserService = require('../app/Services/UserService');
 const PostService = require('../app/Services/PostService');
